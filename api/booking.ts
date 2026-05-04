@@ -76,8 +76,9 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json({ success: true, lead });
   } catch (error: any) {
+    console.error('API Error:', error);
     if (error instanceof z.ZodError) return res.status(400).json({ success: false, errors: error.issues });
-    return res.status(500).json({ success: false, error: 'Internal Server Error' });
+    return res.status(500).json({ success: false, error: error.message || 'Internal Server Error' });
   }
 }
 
