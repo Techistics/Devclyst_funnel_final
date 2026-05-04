@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Globe, 
@@ -114,6 +114,94 @@ const FloatingBadge = ({ icon: Icon, text, className, colorClass = "text-emerald
 const ConsultationForm = () => {
   const [selectedPackage, setSelectedPackage] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
+  const [seenWork, setSeenWork] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [whatsapp, setWhatsapp] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isSuccess) {
+      document.getElementById('book-form')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [isSuccess]);
+
+  const validateWhatsApp = (num: string) => {
+    const regex = /^\+?[0-9]{10,15}$/;
+    return regex.test(num.replace(/\s/g, ''));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!name || !whatsapp || !selectedPackage || !selectedTime || !seenWork) {
+      setError('Please fill in all fields to proceed.');
+      return;
+    }
+
+    if (!validateWhatsApp(whatsapp)) {
+      setError('Please enter a valid WhatsApp number (e.g. 03001234567)');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          whatsapp,
+          package: selectedPackage,
+          timeline: selectedTime,
+          seenWork,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setIsSuccess(true);
+      } else {
+        setError(data.errors ? data.errors[0].message : 'Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      console.error('Submission error:', err);
+      setError('Error connecting to server. Please check your internet.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSuccess) {
+    return (
+      <section id="book-form" className="py-24 bg-green-50 min-h-[80vh] flex items-center">
+        <div className="max-w-xl mx-auto px-4 sm:px-6 text-center w-full">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-[2.5rem] p-10 md:p-16 shadow-2xl border border-slate-100"
+          >
+            <div className="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-8">
+              <Check className="w-12 h-12 text-brand stroke-[3]" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-6">Booking Received!</h2>
+            <p className="text-slate-600 text-lg font-medium mb-10 leading-relaxed">
+              Thank you, <span className="text-brand font-bold">{name.split(' ')[0]}</span>. <br className="hidden sm:block" />
+              We'll reach out to you on WhatsApp within the next 24 hours to confirm your consultation.
+            </p>
+            <button 
+              onClick={() => setIsSuccess(false)}
+              className="w-full sm:w-auto px-10 py-5 bg-brand text-white rounded-2xl font-black text-lg shadow-xl shadow-teal-100 hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              Back to Website
+            </button>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="book-form" className="py-24 bg-green-50">
@@ -133,11 +221,24 @@ const ConsultationForm = () => {
           viewport={{ once: true }}
           className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100"
         >
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-red-50 border border-red-100 text-red-600 px-5 py-3 rounded-xl text-sm font-bold text-center mb-4"
+              >
+                {error}
+              </motion.div>
+            )}
+
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">Full Name</label>
               <input 
                 type="text" 
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="Ahmed Khan"
                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all font-medium"
               />
@@ -147,7 +248,10 @@ const ConsultationForm = () => {
               <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">WhatsApp Number</label>
               <input 
                 type="tel" 
-                placeholder="+92 370 4640009"
+                required
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                placeholder="e.g. 0300 1234567"
                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all font-medium"
               />
             </div>
@@ -155,7 +259,7 @@ const ConsultationForm = () => {
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">Which package interests you?</label>
               <div className="grid grid-cols-1 gap-3">
-                {['Starter — Rs. 15,000', 'Complete — Rs. 35,000', 'Not sure yet'].map((pkg) => (
+                {['Starter — Rs. 14,999', 'Complete — Rs. 19,999', 'Not sure yet'].map((pkg) => (
                   <button
                     key={pkg}
                     type="button"
@@ -167,6 +271,26 @@ const ConsultationForm = () => {
                     }`}
                   >
                     {pkg}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">Have you seen our working chatbots and website for other businesses?</label>
+              <div className="grid grid-cols-2 gap-3">
+                {['Yes', 'No'].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setSeenWork(opt.toLowerCase())}
+                    className={`text-center px-5 py-4 rounded-2xl border transition-all font-bold ${
+                      seenWork === opt.toLowerCase() 
+                      ? 'bg-brand border-brand text-white shadow-lg shadow-teal-100' 
+                      : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-slate-200'
+                    }`}
+                  >
+                    {opt}
                   </button>
                 ))}
               </div>
@@ -194,10 +318,11 @@ const ConsultationForm = () => {
 
             <button 
               type="submit"
-              className="cursor-pointer w-full py-5 bg-brand text-white rounded-2xl font-black text-lg shadow-xl shadow-teal-100 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+              disabled={isSubmitting}
+              className={`cursor-pointer w-full py-5 bg-brand text-white rounded-2xl font-black text-lg shadow-xl shadow-teal-100 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Book My Free Consultation
-              <ArrowRight className="w-5 h-5" />
+              {isSubmitting ? 'Processing...' : 'Book My Free Consultation'}
+              {!isSubmitting && <ArrowRight className="w-5 h-5" />}
             </button>
 
             <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs font-bold text-slate-400">
