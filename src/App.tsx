@@ -116,6 +116,7 @@ const ConsultationForm = () => {
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [seenWork, setSeenWork] = useState<string>('');
   const [name, setName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [whatsapp, setWhatsapp] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -128,21 +129,21 @@ const ConsultationForm = () => {
   }, [isSuccess]);
 
   const validateWhatsApp = (num: string) => {
-    const regex = /^\+?[0-9]{10,15}$/;
-    return regex.test(num.replace(/\s/g, ''));
+    const cleaned = num.replace(/\s/g, '');
+    return /^(03\d{9}|923\d{9}|\+923\d{9})$/.test(cleaned);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!name || !whatsapp || !selectedPackage || !selectedTime || !seenWork) {
+    if (!name || !email || !whatsapp || !selectedPackage || !selectedTime || !seenWork) {
       setError('Please fill in all fields to proceed.');
       return;
     }
 
     if (!validateWhatsApp(whatsapp)) {
-      setError('Please enter a valid WhatsApp number (e.g. 03001234567)');
+      setError('Enter a valid number');
       return;
     }
 
@@ -153,6 +154,7 @@ const ConsultationForm = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
+          email,
           whatsapp,
           package: selectedPackage,
           timeline: selectedTime,
@@ -204,8 +206,8 @@ const ConsultationForm = () => {
   }
 
   return (
-    <section id="book-form" className="py-24 bg-green-50">
-      <div className="max-w-xl mx-auto px-4 sm:px-6">
+    <section id="book-form" className="py-24 bg-gray-100">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-100 rounded-full text-amber-700 text-xs font-bold uppercase mb-6">
             <Zap className="w-3.5 h-3.5 fill-current" />
@@ -215,126 +217,166 @@ const ConsultationForm = () => {
           <p className="text-slate-500 font-medium">15-minute WhatsApp call. No payment now. No commitment.</p>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-white rounded-[2.5rem] p-8 sm:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100"
+          className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 shadow-sm"
         >
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-7" onSubmit={handleSubmit}>
             {error && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="bg-red-50 border border-red-100 text-red-600 px-5 py-3 rounded-xl text-sm font-bold text-center mb-4"
+                className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm font-medium"
               >
                 {error}
               </motion.div>
             )}
 
+            {/* Name */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">Full Name</label>
-              <input 
-                type="text" 
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+              <input
+                type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ahmed Khan"
-                className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all font-medium"
+                placeholder="Mr / Mrs / Miss"
+                className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all text-sm"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">WhatsApp Number</label>
-              <input 
-                type="tel" 
-                required
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="e.g. 0300 1234567"
-                className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all font-medium"
-              />
+            {/* Email & WhatsApp side by side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@gmail.com"
+                  className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">WhatsApp Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder="03001234567"
+                  maxLength={13}
+                  className="w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all text-sm"
+                />
+              </div>
             </div>
 
+            {/* Package */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">Which package interests you?</label>
-              <div className="grid grid-cols-1 gap-3">
-                {['Starter — Rs. 14,999', 'Complete — Rs. 19,999', 'Not sure yet'].map((pkg) => (
+              <label className="block text-sm font-semibold text-slate-700 mb-3">Which package interests you?</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 cursor-pointer">
+                {[
+                  { label: 'Starter', sub: 'Rs. 14,999', value: 'Starter — Rs. 14,999' },
+                  { label: 'Complete', sub: 'Rs. 19,999', value: 'Complete — Rs. 19,999' },
+                  { label: 'Not sure yet', sub: 'Help me decide', value: 'Not sure yet' },
+                ].map((pkg) => (
                   <button
-                    key={pkg}
+                    key={pkg.value}
                     type="button"
-                    onClick={() => setSelectedPackage(pkg)}
-                    className={`text-left px-5 py-4 rounded-2xl border transition-all font-medium ${
-                      selectedPackage === pkg 
-                      ? 'bg-brand border-brand text-white shadow-lg shadow-teal-100' 
-                      : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-slate-200'
+                    onClick={() => setSelectedPackage(pkg.value)}
+                    className={`text-left px-4 py-3 rounded-lg border transition-all ${
+                      selectedPackage === pkg.value
+                        ? 'border-brand bg-teal-50 text-brand'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
                     }`}
                   >
-                    {pkg}
+                    <p className="font-semibold text-sm">{pkg.label}</p>
+                    <p className={`text-xs mt-0.5 ${selectedPackage === pkg.value ? 'text-teal-600' : 'text-slate-400'}`}>{pkg.sub}</p>
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Seen Work */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">Have you seen our working chatbots and website for other businesses?</label>
-              <div className="grid grid-cols-2 gap-3">
+              <label className="block text-sm font-semibold text-slate-700 mb-3">Have you seen our work for other businesses?</label>
+              <div className="flex gap-6">
                 {['Yes', 'No'].map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => setSeenWork(opt.toLowerCase())}
-                    className={`text-center px-5 py-4 rounded-2xl border transition-all font-bold ${
-                      seenWork === opt.toLowerCase() 
-                      ? 'bg-brand border-brand text-white shadow-lg shadow-teal-100' 
-                      : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-slate-200'
-                    }`}
-                  >
-                    {opt}
-                  </button>
+                  <label key={opt} className="flex items-center gap-2.5 group">
+                    <div
+                      onClick={() => setSeenWork(opt.toLowerCase())}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
+                        seenWork === opt.toLowerCase()
+                          ? 'border-brand bg-brand cursor-pointer'
+                          : 'border-slate-300 bg-white group-hover:border-brand'
+                      }`}
+                    >
+                      {seenWork === opt.toLowerCase() && (
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span
+                      onClick={() => setSeenWork(opt.toLowerCase())}
+                      className="text-sm text-slate-700 font-medium select-none cursor-pointer"
+                    >
+                      {opt}
+                    </span>
+                  </label>
                 ))}
               </div>
             </div>
 
+            {/* Timeline */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">How soon do you want to start?</label>
-              <div className="flex flex-wrap gap-2">
-                {['This week', 'This month', 'Just exploring'].map((time) => (
+              <label className="block text-sm font-semibold text-slate-700 mb-3">How soon do you want to start?</label>
+              <div className="flex flex-col sm:flex-row gap-3 cursor-pointer">
+                {[
+                  { label: 'This week', sub: 'Ready to go now' },
+                  { label: 'This month', sub: 'Planning ahead' },
+                  { label: 'Just exploring', sub: 'No rush' },
+                ].map((t) => (
                   <button
-                    key={time}
+                    key={t.label}
                     type="button"
-                    onClick={() => setSelectedTime(time)}
-                    className={`px-6 py-3 rounded-full border text-sm font-bold transition-all ${
-                      selectedTime === time 
-                      ? 'bg-brand border-brand text-white' 
-                      : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-200'
+                    onClick={() => setSelectedTime(t.label)}
+                    className={`flex-1 text-left px-4 py-3 rounded-lg border transition-all cursor-pointer ${
+                      selectedTime === t.label
+                        ? 'border-brand bg-teal-50 text-brand'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
                     }`}
                   >
-                    {time}
+                    <p className="font-semibold text-sm">{t.label}</p>
+                    <p className={`text-xs mt-0.5 ${selectedTime === t.label ? 'text-teal-600' : 'text-slate-400'}`}>{t.sub}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            <button 
+            {/* Submit */}
+            <button
               type="submit"
               disabled={isSubmitting}
-              className={`cursor-pointer w-full py-5 bg-brand text-white rounded-2xl font-black text-lg shadow-xl shadow-teal-100 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full py-4 bg-brand text-white rounded-lg font-bold text-base hover:bg-teal-700 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mt-2 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               {isSubmitting ? 'Processing...' : 'Book My Free Consultation'}
-              {!isSubmitting && <ArrowRight className="w-5 h-5" />}
+              {!isSubmitting && <ArrowRight className="w-4 h-4" />}
             </button>
 
-            <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs font-bold text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              NO SPAM. WE ONLY CONTACT YOU ON WHATSAPP.
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              No spam. We only contact you on WhatsApp.
             </div>
           </form>
         </motion.div>
 
         <div className="mt-8 text-center">
-          <a 
-            href="https://wa.me/923704640009" 
+          <a
+            href="https://wa.me/923704640009"
             className="text-brand font-bold text-sm hover:underline flex items-center justify-center gap-2"
           >
             Prefer to message directly? WhatsApp us now
@@ -484,6 +526,25 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-teal-100 selection:text-teal-700">
       <Navbar />
+
+      {/* Floating Book Now Button */}
+      <motion.button
+        onClick={scrollToForm}
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 1.5, duration: 0.4, type: 'spring' }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#0F172B] text-white rounded-full shadow-2xl shadow-teal-300/50 flex items-center justify-center cursor-pointer"
+        title="Book Free Consultation"
+        aria-label="Book Free Consultation"
+      >
+        {/* Pulse ring */}
+        <span className="absolute inline-flex h-full w-full rounded-full bg-[#0F172B] opacity-30 animate-ping" />
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </motion.button>
 
       {/* 1. Hero Section */}
       <section className="relative pt-28 md:pt-[60px] pb-16 px-5 md:px-10 bg-white overflow-hidden min-h-0 flex items-center justify-center">
